@@ -11,4 +11,6 @@ For more details about the code structure and usability, see the code documentat
 .. toctree::
    :maxdepth: 1
 
+   autodoc/blending.rst
    autodoc/cnn.rst
+   autodoc/transformer.rst

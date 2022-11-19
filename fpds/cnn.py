@@ -1,10 +1,15 @@
+"""
+CNN implementation: pre-trained EfficientNet model fine-tuned with the dataset
+"""
+
+
 import pandas as pd
 import numpy as np
 import tensorflow as tf
 from tensorflow import Tensor
 from tensorflow.data import Dataset
 from tensorflow.keras import layers
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, load_model
 from PIL import Image
 from typing import Tuple, List
 from tensorflow.keras.applications import EfficientNetB3
@@ -15,7 +20,17 @@ from sklearn.preprocessing import OneHotEncoder
 import tensorflow_addons as tfa
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
-from static import IMAGE_SHAPE, NUM_CLASSES, KAGGLE_PATH, MODEL_PATH
+import os
+
+
+LOCAL: bool = True  # True if the scripts are to be run locally
+KAGGLE_PATH: str = 'data/' if LOCAL else '/kaggle/input/schneider-hackaton-2022/'
+MODEL_PATH: str = 'models/' if LOCAL else '/kaggle/working/'
+if not os.path.isdir(MODEL_PATH):
+    os.makedirs(MODEL_PATH)
+
+IMAGE_SHAPE: tuple = (332, 332, 3)
+NUM_CLASSES: int = 3
 
 
 def deprecated(function: callable) -> callable:
@@ -183,7 +198,7 @@ def build_model(backbone: str, optimizer, dropout_rate: float = 0.,
 
 
 def train_model(n_epochs: int, backbone: str, optimizer, features_arr: np.ndarray,
-                labels_arr: np.ndarray, **kwargs) -> None:
+                labels_arr: np.ndarray, **kwargs) -> Model:
     """
     Train the model and serialize it (encoding the obtained [macro] F1 score)
 
@@ -224,9 +239,10 @@ def train_model(n_epochs: int, backbone: str, optimizer, features_arr: np.ndarra
     print(f"F1 Score", f1_value)
 
     model.save(f"{MODEL_PATH}/cnn_{np.round(f1_value, 3)}")
+    return model
 
 
-def run_train_and_save(backbone: str = 'B3') -> None:
+def run_train_and_save(backbone: str = 'B3') -> Model:
     """
     Drive the preprocessing of the training set (and its splits for testing purposes),
     the transfer learning of an EfficientNet and the serialization of the model
@@ -269,10 +285,10 @@ def run_train_and_save(backbone: str = 'B3') -> None:
     #     y_train, y_test = labels_arr[train_index], labels_arr[test_index]
 
     # we could just do a 1-fold split
-    train_model(50, backbone, optimizer, features_arr, labels_arr)
+    return train_model(50, backbone, optimizer, features_arr, labels_arr)
 
 
-def use_model_for_inference(model) -> np.ndarray:
+def use_model_for_inference(model, dataframe: pd.DataFrame = None) -> np.ndarray:
     """
     Given the trained model, retrieve the array of class' probabilities
 
@@ -280,13 +296,27 @@ def use_model_for_inference(model) -> np.ndarray:
     ----------
     model
         Trained model
+    dataframe
+        Dataframe to be use for the inference
 
     Returns
     -------
         np.ndarray: array of predictions, hence of shape (n_samples, 3)
 
     """
-    test_df: pd.DataFrame = (KAGGLE_PATH + pd.read_csv(f"{KAGGLE_PATH}/test.csv")['example_path']).to_frame()
-    test_dataset: Dataset = load_images_as_normalized_dataset(test_df['example_path'])
+    if dataframe is None:
+        test_df: pd.DataFrame = (KAGGLE_PATH + pd.read_csv(f"{KAGGLE_PATH}/test.csv")['example_path']).to_frame()
+        test_dataset: Dataset = load_images_as_normalized_dataset(test_df['example_path'])
+    else:
+        test_dataset: Dataset = load_images_as_normalized_dataset(dataframe['example_path'])
     features_arr = np.array([d.numpy() for d in test_dataset])[0, :, :, :]
     return model.predict(features_arr)
+
+
+if __name__ == '__main__':
+    SERIALIZED_MODELS_PATH: str = 'models'
+    _train_df = pd.read_csv(KAGGLE_PATH + 'train.csv')
+    _model = load_model(f'{SERIALIZED_MODELS_PATH}/cnn_0.714')
+    _train_df['example_path'] = KAGGLE_PATH + _train_df['example_path']
+    _y_hat = use_model_for_inference(_model, dataframe=_train_df)
+    print("F1 score", f1_score(_train_df['label'].values, np.argmax(_y_hat, axis=1), average='macro'))

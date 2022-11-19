@@ -7,6 +7,12 @@ In order to launch the code for the predictive model, you have to type:
 python -m fpds.run
 ```
 
+Bear in mind that if the code is running locally, the ``LOCAL`` global
+variables in the modules have to keep as ``True``; while in case
+
+It also assumes that ``data`` exists with the default structure:
+* 
+
 ### Other relevant links
 
 In the following links there are interesting resources:
@@ -19,7 +25,7 @@ In the following links there are interesting resources:
 ```bash
 conda create -n schneider python=3.9
 conda activate schneider
-conda install -c anaconda tensorflow==2.9.0 -y 
+conda install -c anaconda tensorflow -y
 conda install -c conda-forge keras matplotlib transformers -y
 pip install vit-keras
 conda install -c anaconda seaborn pillow -y
