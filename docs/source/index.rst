@@ -11,4 +11,4 @@ For more details about the code structure and usability, see the code documentat
 .. toctree::
    :maxdepth: 1
 
-   autodoc/run.rst
+   autodoc/cnn.rst
