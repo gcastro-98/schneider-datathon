@@ -7,11 +7,10 @@ In order to launch the code for the predictive model, you have to type:
 python -m fpds.run
 ```
 
-Bear in mind that if the code is running locally, the ``LOCAL`` global
-variables in the modules have to keep as ``True``; while in case
+Bear in mind that if the code is running locally, the LOCAL global
+variables in the modules have to keep as True; while in case it is running at the cloud you have to adjust the path.
 
-It also assumes that ``data`` exists with the default structure:
-* 
+It also assumes that data exists with the default structure, that is all the downloaded folders and csv have to go into  data.
 
 ### Other relevant links
 
