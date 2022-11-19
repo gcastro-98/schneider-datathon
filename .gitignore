@@ -1,5 +1,7 @@
 # IO folders
 data/
+models/
+predictions/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
